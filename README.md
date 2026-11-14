@@ -3,12 +3,11 @@ This repository contains details of the vulnerabilities that I've found on a EOL
 
 # Unauthenticated WiFi Credential & Device-Info Disclosure
 
-**Target:** Linksys X1000, firmware `FW_X1000_ANNEX_A_1.0.01.005` (Jan 2015)
-**Component:** `/bin/httpd` (Broadcom CMS / Ayecom web server), MIPS32 BE
-**Severity:** High (CWE-306, Missing Authentication for Critical Function)
-**Status:** Static analysis confirmed; dynamic confirmation pending
-**Public:** Not published for the X1000. Same class/data as **CVE-2022-35572** (Linksys E5350 `/SysInfo.htm`, CVSS 7.5).
-**VulnCheck Submission ID:** a4783af0-716d-4062-a09a-e4ed502331e2
+- **Target:** Linksys X1000, firmware `FW_X1000_ANNEX_A_1.0.01.005` (Jan 2015)
+- **Component:** `/bin/httpd` (Broadcom CMS / Ayecom web server), MIPS32 BE
+- **Severity:** High (CWE-306, Missing Authentication for Critical Function)
+- **Status:** Static analysis confirmed; dynamic confirmation pending
+- **VulnCheck Submission ID:** a4783af0-716d-4062-a09a-e4ed502331e2
 
 ### Summary
 A plain unauthenticated GET to a whitelisted page returns live wireless credentials
@@ -71,13 +70,13 @@ require a valid session before `ejGetWl` renders secret values.
 
 # Command Injection in Guest-Access Unblock (`mac` parameter)
 
-**Target:** Linksys X1000, firmware `FW_X1000_ANNEX_A_1.0.01.005`
-**Component:** `/bin/httpd`, `do_cgi` (`sub_41a6e4`), `guest_login` handler
-**Severity:** High — OS command execution as root (CWE-78)
-**Privilege required:** Guest-network password only (NOT admin). Not remote-admin gated.
-**VulnCheck Submission ID:** 0987f32b-aca8-489c-97bd-b31ef54c5193
+- **Target:** Linksys X1000, firmware `FW_X1000_ANNEX_A_1.0.01.005`
+- **Component:** `/bin/httpd`, `do_cgi` (`sub_41a6e4`), `guest_login` handler
+- **Severity:** High — OS command execution as root (CWE-78)
+- **Privilege required:** Guest-network password only (NOT admin). Not remote-admin gated.
+- **VulnCheck Submission ID:** 0987f32b-aca8-489c-97bd-b31ef54c5193
 
-## Sink
+### Sink
 `do_cgi` dispatches on `submit_type`. For `submit_type=guest_login` (`0x41e40c`+):
 
 ```
@@ -94,14 +93,14 @@ if (cmsDal_CheckGuestPassword(var_2030)) {                        ; 0x41e484 —
 shell-metacharacter filtering. `mac` is not passed through `TcmValidateMACaddress`
 before the `sprintf`. So shell metacharacters in `mac` execute as root.
 
-## Reachability
+### Reachability
 - Handler lives in the `.cgi` MIME handler `do_cgi` (`sub_41a6e4`).
 - Reached via the **unauthenticated** guest CGI `GUIWlcheckmobilePage.cgi`
   (in the pre-auth whitelist in `handle_request`; see F1). The page name clears the
   Basic-auth gate; `do_cgi` then dispatches purely on `submit_type`.
 - Gate: `cmsDal_CheckGuestPassword(guest_login)` must succeed.
 
-## Gate analysis - likely UNAUTHENTICATED by default
+### Gate analysis - likely UNAUTHENTICATED by default
 `cmsDal_CheckGuestPassword` (`libcms_dal.so` @ 0x1baa4) is a plain strcmp:
 
 ```c
